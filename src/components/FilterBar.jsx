@@ -20,7 +20,7 @@ export default function FilterBar({ activeCats, activeStats, onToggleCat, onTogg
     <div style={{ position:'absolute', bottom:18, left:16, zIndex:40, display:'flex', flexDirection:'column', alignItems:'flex-start', gap:6 }}>
       {open && (
         <div style={{
-          background:'rgba(7,8,15,0.94)', border:'1px solid var(--border-1)',
+          background:'rgba(255,255,255,0.95)', border:'1px solid var(--border-1)',
           borderRadius:8, padding:'14px', backdropFilter:'blur(16px)',
           animation:'fadeUp 150ms var(--ease)', display:'flex', flexDirection:'column', gap:16, minWidth:190,
         }}>
@@ -52,7 +52,7 @@ export default function FilterBar({ activeCats, activeStats, onToggleCat, onTogg
         onClick={() => setOpen(v => !v)}
         style={{
           display:'flex', alignItems:'center', gap:7, padding:'7px 12px',
-          background:'rgba(7,8,15,0.92)', border:`1px solid ${hasActive ? 'var(--border-2)' : 'var(--border-1)'}`,
+          background:'rgba(255,255,255,0.92)', border:`1px solid ${hasActive ? 'var(--border-2)' : 'var(--border-1)'}`,
           borderRadius:6, color: hasActive ? 'var(--text-hi)' : 'var(--text-mid)',
           fontSize:11, backdropFilter:'blur(12px)', fontFamily:'var(--font-code)', letterSpacing:'0.04em', transition:'border-color 150ms',
         }}

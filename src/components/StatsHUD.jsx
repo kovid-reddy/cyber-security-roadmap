@@ -14,7 +14,7 @@ export default function StatsHUD({ nodes = [], edges = [] }) {
     <div style={{
       position:'absolute', top:14, left:16, zIndex:40,
       display:'flex', alignItems:'stretch',
-      background:'rgba(7,8,15,0.9)', border:'1px solid var(--border-1)',
+      background:'rgba(255,255,255,0.9)', border:'1px solid var(--border-1)',
       borderRadius:7, backdropFilter:'blur(14px)', overflow:'hidden',
     }}>
       <StatCell label="Nodes"  value={total} />

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import GraphCanvas from '../components/GraphCanvas.jsx'
 import SidePanel from '../components/SidePanel.jsx'
 import TopNav from '../components/TopNav.jsx'
@@ -11,13 +11,57 @@ export default function GraphPage({ graphData }) {
   const [activeCats, setActiveCats] = useState([])
   const [activeStats, setActiveStats] = useState([])
   const [focusId, setFocusId]     = useState(null)
+  const [currentPath, setCurrentPath] = useState(null)
 
-  const handleSelect = useCallback(node => setSelected(node), [])
+  const displayedGraph = useMemo(() => {
+    // 1. Filter nodes at the current level
+    const nodes = graphData.nodes.filter(node => {
+      // If currentPath is null, show top-level categories/folders
+      if (currentPath === null) {
+        return node.parentId === null
+      }
+      return node.parentId === currentPath
+    })
+
+    // 2. Filter edges connecting nodes present at this level
+    const nodeIds = new Set(nodes.map(node => node.id))
+    const edges = graphData.edges.filter(edge => {
+      return nodeIds.has(edge.source) && nodeIds.has(edge.target)
+    })
+
+    // 3. Find parent folder details
+    const parentTopic = currentPath 
+      ? graphData.nodes.find(node => node.id === currentPath)
+      : null
+
+    return { nodes, edges, parentTopic }
+  }, [graphData, currentPath])
+
+  const handleSelect = useCallback(node => {
+    if (!node) {
+      setSelected(null)
+      return
+    }
+    // If the clicked node is a folder, drill down into it
+    if (node.type === 'folder') {
+      setCurrentPath(node.id)
+      setSelected(null)
+      setFocusId(null)
+      return
+    }
+    // If it's a file, select it to view the side panel
+    setSelected(node)
+  }, [])
+  
   const handleClose  = useCallback(() => setSelected(null), [])
 
   const handleSearchPick = useCallback(id => {
     const node = graphData.nodes.find(n => n.id === id)
-    if (node) { setSelected(node.data ?? node); setFocusId(id) }
+    if (node) { 
+      setCurrentPath(node.parentId) // Navigate the graph to show the node's parent directory
+      setSelected(node.data ?? node)
+      setFocusId(id) 
+    }
   }, [graphData])
 
   const toggleCat  = useCallback(c => setActiveCats(p => p.includes(c) ? p.filter(x => x !== c) : [...p, c]), [])
@@ -26,7 +70,7 @@ export default function GraphPage({ graphData }) {
   return (
     <div style={{ width:'100vw', height:'100vh', display:'flex', flexDirection:'column' }}>
       <TopNav
-        nodes={graphData.nodes}
+        nodes={graphData.nodes} // Allow searching all nodes, not just current folder level
         search={search}
         onSearch={setSearch}
         onPick={handleSearchPick}
@@ -34,7 +78,7 @@ export default function GraphPage({ graphData }) {
 
       <div style={{ flex:1, position:'relative', overflow:'hidden' }}>
         <GraphCanvas
-          graphData={graphData}
+          graphData={displayedGraph}
           search={search}
           activeCats={activeCats}
           activeStats={activeStats}
@@ -43,7 +87,21 @@ export default function GraphPage({ graphData }) {
           panelOpen={!!selected}
         />
 
-        <StatsHUD nodes={graphData.nodes} edges={graphData.edges} />
+        <StatsHUD nodes={displayedGraph.nodes} edges={displayedGraph.edges} />
+
+        {displayedGraph.parentTopic && (
+          <button
+            onClick={() => { 
+              const parent = displayedGraph.parentTopic
+              setCurrentPath(parent.parentId) // Go up one level
+              setSelected(null)
+              setFocusId(null) 
+            }}
+            style={{ position:'absolute', top:14, left:385, zIndex:40, padding:'9px 12px', border:'1px solid var(--border-2)', borderRadius:6, background:'rgba(255,255,255,0.92)', color:'var(--accent)', fontSize:11, fontFamily:'var(--font-code)' }}
+          >
+            ← Back to {displayedGraph.parentTopic.parentId ? 'Parent' : 'Atlas'}
+          </button>
+        )}
 
         <FilterBar
           activeCats={activeCats}
@@ -54,9 +112,14 @@ export default function GraphPage({ graphData }) {
 
         <SidePanel
           node={selected}
-          allNodes={graphData.nodes}
+          allNodes={graphData.nodes} // Allow linking to any related topic in the graph
           onClose={handleClose}
-          onNavigateTo={n => { const node = n.data ?? n; setSelected(node); setFocusId(node.id) }}
+          onNavigateTo={n => { 
+            const node = n.data ?? n
+            setCurrentPath(node.parentId) // Navigate the graph to show the target node's folder
+            setSelected(node)
+            setFocusId(node.id) 
+          }}
         />
       </div>
     </div>

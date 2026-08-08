@@ -13,7 +13,10 @@ export default function SidePanel({ node, allNodes, onClose, onNavigateTo }) {
   const isOpen = !!node
 
   const related = node
-    ? (node.connections || []).map(id => allNodes.find(n => n.id === id)).filter(Boolean)
+    ? (node.connections || [])
+      .map(connection => typeof connection === 'string' ? connection : connection.id)
+      .map(id => allNodes.find(n => n.id === id))
+      .filter(Boolean)
     : []
 
   return (
@@ -126,7 +129,7 @@ function PanelContent({ node, related, onClose, navigate, onNavigateTo }) {
           onMouseEnter={e => { e.currentTarget.style.background = `${color}28`; e.currentTarget.style.borderColor = `${color}70` }}
           onMouseLeave={e => { e.currentTarget.style.background = `linear-gradient(135deg, ${color}20, ${color}10)`; e.currentTarget.style.borderColor = `${color}40` }}
         >
-          View Full Note
+          {data.parentId ? 'Read Chapter' : 'View Full Note'}
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>

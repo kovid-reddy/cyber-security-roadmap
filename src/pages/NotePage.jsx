@@ -25,15 +25,23 @@ export default function NotePage({ graphData }) {
   const catLbl = CAT_LABELS[d.category] || d.category
 
   const connected = (d.connections || [])
-    .map(cid => graphData.nodes.find(n => n.id === cid))
+    .map(connection => typeof connection === 'string' ? connection : connection.id)
+    .map(id => graphData.nodes.find(n => n.id === id))
     .filter(Boolean)
+
+  const children = useMemo(() => {
+    return graphData.nodes.filter(n => {
+      const cData = n.data ?? n
+      return cData.parentId === d.id && cData.id !== d.id
+    })
+  }, [graphData.nodes, d.id])
 
   return (
     <div style={{ width:'100vw', height:'100vh', display:'flex', flexDirection:'column', background:'var(--bg-void)' }}>
       {/* Top bar */}
       <header style={{
         height:'var(--nav-h)', flexShrink:0,
-        background:'rgba(7,8,15,0.96)', borderBottom:'1px solid var(--border-1)',
+        background:'rgba(255,255,255,0.96)', borderBottom:'1px solid var(--border-1)',
         display:'flex', alignItems:'center', padding:'0 24px', gap:16,
         backdropFilter:'blur(12px)', position:'sticky', top:0, zIndex:100,
       }}>
@@ -86,6 +94,49 @@ export default function NotePage({ graphData }) {
             style={{ animation:'fadeUp 300ms 80ms var(--ease) both' }}
             dangerouslySetInnerHTML={{ __html: d.contentHtml || '<p style="color:var(--text-lo)">No content yet.</p>' }}
           />
+
+          {/* Subtopics / Chapters list */}
+          {children.length > 0 && (
+            <section style={{ marginTop:48, animation:'fadeUp 300ms 100ms var(--ease) both' }}>
+              <SectionLabel color={color}>Chapters & Subtopics</SectionLabel>
+              <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:32 }}>
+                {children.map(child => {
+                  const cData = child.data ?? child
+                  const cStatus = STATUS_META[cData.status] || STATUS_META['not-started']
+                  const cDiff = DIFF_META[cData.difficulty] || DIFF_META.beginner
+                  return (
+                    <Link
+                      key={cData.id}
+                      to={`/topic/${cData.id}`}
+                      style={{
+                        display:'flex', alignItems:'center', gap:16, padding:'14px 18px',
+                        background:'var(--bg-card)', border:'1px solid var(--border-1)',
+                        borderRadius:'var(--radius)', textDecoration:'none',
+                        transition:'all 150ms var(--ease)',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = color + '44'; e.currentTarget.style.background = 'var(--bg-raised)' }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-1)'; e.currentTarget.style.background = 'var(--bg-card)' }}
+                    >
+                      <div style={{ display:'flex', flexDirection:'column', flex:1, gap:4 }}>
+                        <span style={{ fontSize:14, color:'var(--text-hi)', fontWeight:600 }}>
+                          {cData.title}
+                        </span>
+                        {cData.summary && (
+                          <span style={{ fontSize:12, color:'var(--text-lo)', lineHeight:1.5 }}>
+                            {cData.summary}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display:'flex', gap:6, flexShrink:0, alignItems:'center' }}>
+                        <Badge label={cStatus.label} color={cStatus.color} bg={cStatus.bg} border={cStatus.border} />
+                        <Badge label={cDiff.label} color={cDiff.color} bg={`${cDiff.color}12`} border={`${cDiff.color}30`} />
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            </section>
+          )}
 
           {/* Connected topics */}
           {connected.length > 0 && (

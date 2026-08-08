@@ -30,7 +30,7 @@ export default function TopNav({ nodes, search, onSearch, onPick }) {
   return (
     <header style={{
       height:'var(--nav-h)', flexShrink:0,
-      background:'rgba(7,8,15,0.96)',
+      background:'rgba(255,255,255,0.96)',
       borderBottom:'1px solid var(--border-1)',
       display:'flex', alignItems:'center',
       padding:'0 20px', gap:20,
