@@ -8,7 +8,7 @@ export default function App() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    fetch(import.meta.env.BASE_URL + 'graph-data.json')
+    fetch(import.meta.env.BASE_URL + 'graph-data.json?v=' + Date.now(), { cache: 'no-store' })
       .then(r => {
         if (!r.ok) throw new Error(`graph-data.json not found (HTTP ${r.status}). Run: npm run dev`)
         return r.json()
