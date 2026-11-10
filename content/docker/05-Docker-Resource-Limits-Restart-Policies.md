@@ -2,7 +2,7 @@
 id: DEV-005
 title: Docker Resource Limits, Restart Policies & Lifecycle
 category: docker
-status: completed
+status: learned
 difficulty: 2
 mastery: learning
 summary: Control container CPU and memory consumption, configure automatic restart behaviour, understand container lifecycle states, and diagnose resource-related exits.
