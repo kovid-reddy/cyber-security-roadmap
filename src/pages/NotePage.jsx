@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useEffect, useMemo, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { catColor, CAT_LABELS, STATUS_META, DIFF_META } from '../utils/colors.js'
 
@@ -35,6 +35,68 @@ export default function NotePage({ graphData }) {
       return cData.parentId === d.id && cData.id !== d.id
     })
   }, [graphData.nodes, d.id])
+
+  const noteBodyRef = useRef(null)
+
+  // Markdown's Mermaid fences are emitted by marked as <pre><code class="language-mermaid">.
+  // Convert those blocks into Mermaid containers and render them after the note HTML mounts.
+  useEffect(() => {
+    const root = noteBodyRef.current
+    if (!root) return
+
+    const codeBlocks = Array.from(root.querySelectorAll('pre > code.language-mermaid'))
+    if (codeBlocks.length === 0) return
+
+    let cancelled = false
+
+    async function renderDiagrams() {
+      try {
+        // Load Mermaid only on notes that actually contain Mermaid diagrams.
+        const { default: mermaid } = await import(
+          /* @vite-ignore */ 'https://cdn.jsdelivr.net/npm/mermaid@12.3.0/dist/mermaid.esm.min.mjs'
+        )
+
+        if (cancelled) return
+
+        mermaid.initialize({
+          startOnLoad: false,
+          securityLevel: 'strict',
+          theme: 'default',
+        })
+
+        const diagrams = codeBlocks.map(code => {
+          const container = document.createElement('div')
+          container.className = 'mermaid'
+          container.textContent = code.textContent || ''
+          code.parentElement.replaceWith(container)
+          return container
+        })
+
+        for (const diagram of diagrams) {
+          if (cancelled) return
+          const source = diagram.textContent || ''
+
+          try {
+            await mermaid.run({ nodes: [diagram] })
+          } catch (error) {
+            console.error('Could not render Mermaid diagram:', error)
+            const fallback = document.createElement('pre')
+            const fallbackCode = document.createElement('code')
+            fallbackCode.textContent = source
+            fallback.appendChild(fallbackCode)
+            diagram.replaceWith(fallback)
+          }
+        }
+      } catch (error) {
+        console.error('Could not load Mermaid renderer:', error)
+      }
+    }
+
+    renderDiagrams()
+    return () => {
+      cancelled = true
+    }
+  }, [d.contentHtml, topicId])
 
   return (
     <div style={{ width:'100vw', height:'100vh', display:'flex', flexDirection:'column', background:'var(--bg-void)' }}>
@@ -90,6 +152,7 @@ export default function NotePage({ graphData }) {
 
           {/* Rendered markdown content */}
           <div
+            ref={noteBodyRef}
             className="note-body"
             style={{ animation:'fadeUp 300ms 80ms var(--ease) both' }}
             dangerouslySetInnerHTML={{ __html: d.contentHtml || '<p style="color:var(--text-lo)">No content yet.</p>' }}
@@ -339,5 +402,21 @@ const noteBodyCSS = `
     border-radius: var(--radius);
     border: 1px solid var(--border-1);
     margin: 16px 0;
+  }
+  .note-body .mermaid {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 24px 0;
+    padding: 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-1);
+    border-radius: var(--radius);
+    overflow-x: auto;
+  }
+  .note-body .mermaid svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
   }
 `
