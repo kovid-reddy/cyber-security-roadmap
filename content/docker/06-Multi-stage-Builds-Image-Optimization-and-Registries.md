@@ -2,7 +2,7 @@
 id: DEV-006
 title: Multi-stage Builds, Image Optimization & Registries
 category: docker
-status: in-progress
+status: learned
 difficulty: 2
 mastery: learning
 summary: Build leaner production images with multi-stage Dockerfiles, inspect image layers and tags, and publish versioned images to a container registry.
